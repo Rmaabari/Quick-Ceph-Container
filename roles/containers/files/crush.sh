@@ -1,5 +1,5 @@
 #!/bin/bash
-crushtool -c /etc/ceph/de-map -o /etc/ceph/map
+crushtool -c roles/containers/files/de-map -o /etc/ceph/map
 ceph osd setcrushmap -i /etc/ceph/map
 
 #ceph osd getcrushmap -o /etc/ceph/map
