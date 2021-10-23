@@ -1,0 +1,132 @@
+---
+# tasks file for containers
+#
+    - name: install LVM2
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ packages }}"
+
+    - name: create folders
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop: "{{ folders }}"
+
+    - name: Create VG
+      lvg:
+        vg: ceph-vg
+        pvs: /dev/sdb
+
+    - name: Create LVMs
+      lvol:
+        vg: ceph-vg
+        lv: "{{ item }}"
+        size: 1g
+        force: yes
+      loop: "{{ lvms }}"
+
+    - name: run MON container
+      command: >
+        podman run --name ceph-mon -d \
+        --log-driver journald --privileged=true \
+        --net=host -v /dev/:/dev/ -v /run/lvm/:/run/lvm/ \
+        -v /var/log/ceph:/var/log/ceph -v /etc/ceph:/etc/ceph \
+        -v /var/lib/ceph/:/var/lib/ceph/ -e MON_IP="{{ MON_IP }}" \
+        -e CEPH_DAEMON=MON -e CEPH_PUBLIC_NETWORK="{{ CLUSTER_IP }}" ceph/daemon
+
+    - name: copy shell scripts to /etc/ceph dir
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /etc/ceph
+        owner: root
+        group: root
+        mode: '7550'
+      loop: "{{ shell }}"
+        
+    - name: run MGR container
+      command: >
+        podman run --name ceph-mgr -d \
+        --log-driver journald --privileged=true \
+        --net=host -v /dev:/dev -v /etc/localtime:/etc/localtime:ro \
+        -v /var/lib/ceph:/var/lib/ceph:z -v /etc/ceph:/etc/ceph:z \
+        -v /var/run/ceph:/var/run/ceph:z -v /var/run/udev/:/var/run/udev/ \
+        -v /var/log/ceph:/var/log/ceph:z -v /run/lvm/:/run/lvm/ \
+        -e CEPH_DAEMON=MGR -e CONTAINER_IMAGE=ceph/daemon ceph/daemon
+
+    - name: create LVMs using the MON container
+      command: >
+        podman exec -it ceph-mon ./etc/ceph/auth.sh
+
+    - name: Wait for MON container to fully deploy
+      wait_for:
+        timeout: 10
+
+    - name: distributing keyrings
+      command: >
+        podman exec -it ceph-mon ./etc/ceph/lvm.sh
+    - name: create 1st OSDs containers
+      command: >
+        podman run -d --privileged=true \
+        --net=host --pid=host --ipc=host \
+        -v /dev:/dev -v /etc/localtime:/etc/localtime:ro \
+        -v /var/lib/ceph:/var/lib/ceph -v /var/log/ceph:/var/log/ceph:z \
+        -v /etc/ceph:/etc/ceph:z -v /var/run/ceph:/var/run/ceph:z \
+        -v /var/run/udev/:/var/run/udev/:z -v /run/lvm:/run/lvm:z \
+        -e CLUSTER=ceph -e CEPH_DAEMON=OSD_CEPH_VOLUME_ACTIVATE \
+        -e CONTAINER_IMAGE=ceph/daemon -e OSD_ID=1 --name=osd1 ceph/daemon
+    - name: create 2nd OSDs containers
+      command: >
+        podman run -d --privileged=true \
+        --net=host --pid=host --ipc=host \
+        -v /dev:/dev -v /etc/localtime:/etc/localtime:ro \
+        -v /var/lib/ceph:/var/lib/ceph -v /var/log/ceph:/var/log/ceph:z \
+        -v /etc/ceph:/etc/ceph:z -v /var/run/ceph:/var/run/ceph:z \
+        -v /var/run/udev/:/var/run/udev/:z -v /run/lvm:/run/lvm:z \
+        -e CLUSTER=ceph -e CEPH_DAEMON=OSD_CEPH_VOLUME_ACTIVATE \
+        -e CONTAINER_IMAGE=ceph/daemon -e OSD_ID=2 --name=osd2 ceph/daemon
+    - name: create 3rd OSDs containers
+      command: >
+        podman run -d --privileged=true \
+        --net=host --pid=host --ipc=host \
+        -v /dev:/dev -v /etc/localtime:/etc/localtime:ro \
+        -v /var/lib/ceph:/var/lib/ceph -v /var/log/ceph:/var/log/ceph:z \
+        -v /etc/ceph:/etc/ceph:z -v /var/run/ceph:/var/run/ceph:z \
+        -v /var/run/udev/:/var/run/udev/:z -v /run/lvm:/run/lvm:z \
+        -e CLUSTER=ceph -e CEPH_DAEMON=OSD_CEPH_VOLUME_ACTIVATE \
+        -e CONTAINER_IMAGE=ceph/daemon -e OSD_ID=3 --name=osd3 ceph/daemon
+    - name: create 4th OSDs containers
+      command: >
+        podman run -d --privileged=true \
+        --net=host --pid=host --ipc=host \
+        -v /dev:/dev -v /etc/localtime:/etc/localtime:ro \
+        -v /var/lib/ceph:/var/lib/ceph -v /var/log/ceph:/var/log/ceph:z \
+        -v /etc/ceph:/etc/ceph:z -v /var/run/ceph:/var/run/ceph:z \
+        -v /var/run/udev/:/var/run/udev/:z -v /run/lvm:/run/lvm:z \
+        -e CLUSTER=ceph -e CEPH_DAEMON=OSD_CEPH_VOLUME_ACTIVATE \
+        -e CONTAINER_IMAGE=ceph/daemon -e OSD_ID=4 --name=osd4 ceph/daemon
+    - name: create 5th OSDs containers
+      command: >
+        podman run -d --privileged=true \
+        --net=host --pid=host --ipc=host \
+        -v /dev:/dev -v /etc/localtime:/etc/localtime:ro \
+        -v /var/lib/ceph:/var/lib/ceph -v /var/log/ceph:/var/log/ceph:z \
+        -v /etc/ceph:/etc/ceph:z -v /var/run/ceph:/var/run/ceph:z \
+        -v /var/run/udev/:/var/run/udev/:z -v /run/lvm:/run/lvm:z \
+        -e CLUSTER=ceph -e CEPH_DAEMON=OSD_CEPH_VOLUME_ACTIVATE \
+        -e CONTAINER_IMAGE=ceph/daemon -e OSD_ID=5 --name=osd5 ceph/daemon
+    - name: modifying crush map to an OSD
+      command: >
+        podman exec -it ceph-mon ./etc/ceph/crush.sh
+    - name: deploy RGW container
+      command: >
+        podman run -d --name ceph-rgw \
+        --log-driver journald --privileged=true \
+        --net=host -v /dev:/dev -v /etc/localtime:/etc/localtime:ro \
+        -v /var/lib/ceph:/var/lib/ceph:z -v /etc/ceph:/etc/ceph:z \
+        -v /var/run/ceph:/var/run/ceph:z -v /var/run/udev:/var/run/udev \
+        -v /var/log/ceph:/var/log/ceph:z -v /run/lvm:/run/lvm:z \
+        -e CEPH_DAEMON=RGW -e CONTAINER_IMAGE=ceph/daemon ceph/daemon
+    - name: remove allow insecure warning
+      command: >
+        podman exec -it ceph-mon ./etc/ceph/post.sh

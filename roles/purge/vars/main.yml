@@ -1,0 +1,32 @@
+---
+# vars file for purge
+containers:
+  - ceph-mon
+  - ceph-mgr
+  - ceph-rgw
+  - osd1
+  - osd2
+  - osd3
+  - osd4
+  - osd5
+folders:
+  - /etc/ceph
+  - /var/lib/ceph
+  - /var/run/ceph
+  - /var/log/ceph
+lvms:
+  - ceph-osd-lvm-0
+  - ceph-osd-lvm-1
+  - ceph-osd-lvm-2
+  - ceph-osd-lvm-3
+  - ceph-osd-lvm-4
+  - ceph-osd-lvm-5
+shell:
+  - /etc/lvm.sh
+  - /etc/de-map
+  - /etc/auth.sh
+  - /etc/crush.sh
+  - /etc/post.sh
+packages:
+  - lvm2
+  - podman

@@ -1,0 +1,63 @@
+- hosts: all
+  become: yes
+  gather_facts: true
+  vars:
+    containers:
+      - ceph-mon
+      - ceph-mgr
+      - ceph-rgw
+      - osd1
+      - osd2
+      - osd3
+      - osd4
+      - osd5
+    folders:
+      - /etc/ceph
+      - /var/lib/ceph
+      - /var/run/ceph
+      - /var/log/ceph
+    lvms:
+      - ceph-osd-lvm-0
+      - ceph-osd-lvm-1
+      - ceph-osd-lvm-2
+      - ceph-osd-lvm-3
+      - ceph-osd-lvm-4
+      - ceph-osd-lvm-5
+    shell:
+      - /etc/lvm.sh
+      - /etc/de-map
+      - /etc/auth.sh
+      - /etc/crush.sh
+      - /etc/post.sh
+    packages:
+      - lvm2
+      - podman
+
+  tasks:      
+   - name: stop all running containers;
+     command: "podman stop {{ item }}"
+     loop: "{{ containers }}"
+
+   - name: remove all containers
+     command: "podman rm {{ item }}"
+     loop: "{{ containers }}"
+
+   - name: remove folders
+     file:
+        path: "{{ item }}"
+        state: absent
+     loop: "{{ folders }}"
+
+   - name: remove lvs
+     lvol:
+        vg: ceph-vg
+        lv: "{{ item }}"
+        state: absent
+        force: yes
+     loop: "{{ lvms }}"
+
+   - name: remvoe VG
+     lvg:
+        vg: ceph-vg
+        state: absent
+        force: yes
