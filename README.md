@@ -13,3 +13,4 @@ OSD_SIZE: 1G
 
 
 Playbook was tested on a CentOS 7.9 machine using vagrant.
+Image used: docker.io/ceph/daemon
