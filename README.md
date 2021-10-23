@@ -10,3 +10,6 @@ CLUSTER_IP: 192.168.42.0/24
 # creates a logical volume with the capcity of the below size to simulate OSD.
 OSD_SIZE: 1G
 ```
+
+
+Playbook was tested on a CentOS 7.9 machine using vagrant.
