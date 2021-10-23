@@ -23,11 +23,11 @@ lvms:
   - ceph-osd-lvm-4
   - ceph-osd-lvm-5
 shell:
-  - /etc/lvm.sh
-  - /etc/de-map
-  - /etc/auth.sh
-  - /etc/crush.sh
-  - /etc/post.sh
+  - roles/containers/files/lvm.sh
+  - roles/containers/files//de-map
+  - roles/containers/files//auth.sh
+  - roles/containers/files//crush.sh
+  - roles/containers/files//post.sh
 packages:
   - lvm2
   - podman
