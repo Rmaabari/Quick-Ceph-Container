@@ -22,7 +22,7 @@
       lvol:
         vg: ceph-vg
         lv: "{{ item }}"
-        size: 1g
+        size: "{{ OSD_SIZE }}"
         force: yes
       loop: "{{ lvms }}"
 
