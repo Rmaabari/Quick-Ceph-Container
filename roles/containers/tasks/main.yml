@@ -16,7 +16,7 @@
     - name: Create VG
       lvg:
         vg: ceph-vg
-        pvs: /dev/sdb
+        pvs: "{{ DISK }}"
 
     - name: Create LVMs
       lvol:
