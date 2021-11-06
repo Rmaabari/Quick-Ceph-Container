@@ -36,11 +36,11 @@
 
   tasks:      
    - name: stop all running containers;
-     command: "podman stop {{ item }}"
+     command: "podman stop -f {{ item }}"
      loop: "{{ containers }}"
 
    - name: remove all containers
-     command: "podman rm {{ item }}"
+     command: "podman rm -f {{ item }}"
      loop: "{{ containers }}"
 
    - name: remove folders
